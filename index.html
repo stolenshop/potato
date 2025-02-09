@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema de Pedidos y Puntos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: #2d2d2d;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            max-width: 800px;
+            width: 100%;
+            margin: 10px;
+        }
+
+        .input-group {
+            margin: 1rem 0;
+        }
+
+        select, input, button {
+            padding: 8px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background: #444;
+            color: white;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #4CAF50;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: auto;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        .resumen {
+            margin-top: 20px;
+            padding: 15px;
+            background: #333;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .puntos {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .menu-adicional {
+            display: none;
+        }
+
+        .menu-item {
+            background: #4CAF50;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.3s;
+            text-align: center;
+        }
+
+        .menu-item:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="puntos" id="puntos">Puntos: 0</div>
+    
+    <div class="container" id="mainForm">
+        <h1>Sistema de Pedidos</h1>
+        
+        <div class="input-group">
+            <input type="text" id="nombre" placeholder="Nombre del cliente*" required>
+            <input type="tel" id="telefono" placeholder="Teléfono del cliente*" required>
+        </div>
+
+        <div class="input-group">
+            <select id="producto" required>
+                <option value="">Seleccione producto*</option>
+                <option value="zapato">Zapatos ($100)</option>
+                <option value="camisa">Camisas ($50)</option>
+                <option value="pantalon">Pantalones ($80)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <select id="talla" required>
+                <option value="">Seleccione talla*</option>
+                <option value="S">S</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <input type="number" id="cantidad" min="1" value="1" placeholder="Cantidad*" required>
+        </div>
+
+        <div class="input-group">
+            <label>Fecha y hora de entrega:</label>
+            <input type="datetime-local" id="fechaEntrega" required>
+        </div>
+
+        <div class="input-group">
+            <label>Método de pago:</label>
+            <label><input type="radio" name="pago" value="online" required> Online</label>
+            <label><input type="radio" name="pago" value="contraentrega" required> Contra entrega</label>
+        </div>
+
+        <button onclick="realizarPedido()">Confirmar Pedido</button>
+        <div id="resumen" class="resumen"></div>
+    </div>
+
+    <div class="container menu-adicional" id="menu">
+        <h2>Opciones Adicionales</h2>
+        <div class="menu-item" onclick="mostrarSeccion('mainForm')">
+            🛍️ Realizar otro pedido
+        </div>
+        <div class="menu-item" onclick="actualizarPuntos()">
+            ⭐ Ver mis puntos
+        </div>
+        <div class="menu-item" onclick="window.open('https://example.com/ofertas', '_blank')">
+            🎉 Ofertas Especiales
+        </div>
+        <div class="menu-item" onclick="window.open('https://example.com/soporte', '_blank')">
+            ❓ Soporte Técnico
+        </div>
+    </div>
+
+    <script>
+        let puntos = localStorage.getItem('puntos') ? parseInt(localStorage.getItem('puntos')) : 0;
+        actualizarPuntos();
+
+        const precios = {
+            zapato: 100,
+            camisa: 50,
+            pantalon: 80
+        };
+
+        function actualizarPuntos() {
+            document.getElementById('puntos').textContent = `Puntos: ${puntos}`;
+        }
+
+        function calcularTotal() {
+            const producto = document.getElementById('producto').value;
+            const cantidad = parseInt(document.getElementById('cantidad').value);
+            return precios[producto] * cantidad;
+        }
+
+        function validarFecha(fecha) {
+            const ahora = new Date();
+            const fechaSeleccionada = new Date(fecha);
+            return fechaSeleccionada > ahora;
+        }
+
+        function realizarPedido() {
+            if (!validarFormulario()) return;
+
+            const nombre = document.getElementById('nombre').value;
+            const telefono = document.getElementById('telefono').value;
+            const producto = document.getElementById('producto').value;
+            const talla = document.getElementById('talla').value;
+            const cantidad = document.getElementById('cantidad').value;
+            const fechaEntrega = document.getElementById('fechaEntrega').value;
+            const pago = document.querySelector('input[name="pago"]:checked').value;
+            const total = calcularTotal();
+            const puntosGanados = Math.floor(total / 10);
+
+            // Actualizar puntos
+            puntos += puntosGanados;
+            localStorage.setItem('puntos', puntos);
+            actualizarPuntos();
+
+            // Enviar WhatsApp
+            const mensaje = `*NUEVO PEDIDO*%0A%0A
+            *Cliente:* ${nombre}%0A
+            *Teléfono:* ${telefono}%0A
+            *Producto:* ${producto}%0A
+            *Talla:* ${talla}%0A
+            *Cantidad:* ${cantidad}%0A
+            *Total:* $${total}%0A
+            *Fecha Entrega:* ${new Date(fechaEntrega).toLocaleString()}%0A
+            *Método Pago:* ${pago}%0A
+            *Puntos Ganados:* ${puntosGanados}`;
+
+            window.open(`https://wa.me/573028143855?text=${encodeURIComponent(mensaje)}`, '_blank');
+
+            // Mostrar menú
+            document.getElementById('mainForm').style.display = 'none';
+            document.getElementById('menu').style.display = 'block';
+        }
+
+        function validarFormulario() {
+            const camposRequeridos = [
+                'nombre', 'telefono', 'producto', 
+                'talla', 'cantidad', 'fechaEntrega'
+            ];
+
+            for (let campo of camposRequeridos) {
+                const elemento = document.getElementById(campo);
+                if (!elemento.value) {
+                    mostrarError(`El campo ${elemento.placeholder} es obligatorio`);
+                    elemento.focus();
+                    return false;
+                }
+            }
+
+            if (!validarFecha(document.getElementById('fechaEntrega').value)) {
+                mostrarError('La fecha de entrega debe ser futura');
+                return false;
+            }
+
+            if (!document.querySelector('input[name="pago"]:checked')) {
+                mostrarError('Seleccione un método de pago');
+                return false;
+            }
+
+            return true;
+        }
+
+        function mostrarError(mensaje) {
+            const resumenDiv = document.getElementById('resumen');
+            resumenDiv.innerHTML = `❌ Error: ${mensaje}`;
+            resumenDiv.style.display = 'block';
+            resumenDiv.style.color = '#ff4444';
+        }
+
+        function mostrarSeccion(id) {
+            document.querySelectorAll('.container').forEach(div => {
+                div.style.display = 'none';
+            });
+            document.getElementById(id).style.display = 'block';
+        }
+    </script>
+</body>
+</html>
